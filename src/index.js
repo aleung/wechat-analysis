@@ -148,7 +148,7 @@ const talkers = _.flow(
   _.map(_.tail),
   _.flattenDeep,
   _.uniq
-)(topTalkers(3, period)(messages));
+)(topTalkers(2, period)(messages));
 
 const out = _.flow(
   _.filter(msg => _.includes(msg.user, talkers)),
@@ -163,6 +163,9 @@ echarts({
   height: 1000,
   path: './output/out.png',
   option: {
+    backgroundColor: '#fff',
+    color: ['#7cb5ec', '#434348', '#90ed7d', '#f7a35c', '#8085e9', 
+    '#f15c80', '#e4d354', '#8085e8', '#8d4653', '#91e8e1'],
     xAxis: {
       type: 'value',
       interval: 1,
@@ -179,7 +182,8 @@ echarts({
       return {
         name: usernames[name],
         data,
-        type: 'line'
+        type: 'line',
+        smooth: true,
       }
     })(out),
     legend: {
