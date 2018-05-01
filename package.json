@@ -5,6 +5,8 @@
   "license": "MIT",
   "dependencies": {
     "better-sqlite3": "^4.1.0",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.10",
+    "moment": "^2.22.1",
+    "node-echarts": "^1.1.2"
   }
 }

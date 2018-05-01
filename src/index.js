@@ -1,5 +1,7 @@
 const _ = require('lodash/fp');
 const Database = require('better-sqlite3');
+const echarts = require('node-echarts');
+const moment = require('moment');
 
 const ROOM = '6624467079@chatroom';
 
@@ -10,7 +12,7 @@ function parseMsg(m) {
   return {
     user,
     content,
-    date: new Date(m.createTime)
+    date: moment(m.createTime)
   }
 }
 
@@ -86,6 +88,37 @@ function parseChatroomNicknames(data) {
   }
 }
 
+function topTalkers(topN, periodFn) {
+  return _.flow(
+    _.groupBy(msg => periodFn(msg.date)),
+    _.mapValues(_.flow(
+      _.groupBy('user'),
+      _.mapValues('length'),
+      _.toPairs,
+      _.sortBy(1),
+      _.takeRight(topN)
+    ))
+  );
+}
+
+function countMsgPerTalker(periodFn) {
+  return _.flow(
+    _.groupBy('user'),
+    _.mapValues(_.flow(
+      _.groupBy(msg => periodFn(msg.date)),
+      _.mapValues('length'),
+      _.toPairs,
+    )),
+    _.toPairs,
+    _.filter(([name, data]) => data.length > 0),
+  );
+}
+
+function print(obj) {
+  console.log('-------------------');
+  console.log(obj);
+}
+
 // ========== main ============
 
 const db = new Database('/Users/leoliang/tmp/2018-04/wechat/decrypted.db', { readonly: true, fileMastExist: true });
@@ -95,25 +128,66 @@ const userMap = _.flow(
   _.mapValues('nickname')
 )(db.prepare('SELECT username, nickname FROM rcontact').all());
 
-const {roomdata} = db.prepare('SELECT roomdata FROM chatroom WHERE chatroomname=?').get(ROOM);
+const { roomdata } = db.prepare('SELECT roomdata FROM chatroom WHERE chatroomname=?').get(ROOM);
 const nicknameMap = _.fromPairs(parseChatroomNicknames(roomdata));
-
 const usernames = _.defaults(userMap, nicknameMap);
-// console.log(usernames);
 
+const messages = _.map(parseMsg)(
+  db.prepare('SELECT content, createTime FROM message WHERE talker=? AND type IN (1,49) AND createTime<1524960000000 LIMIT 1000000').all(ROOM)
+);
 
-const messages =
-  db.prepare('SELECT content, createTime FROM message WHERE talker=? AND type=1 LIMIT 100000')
-    .all(ROOM);
+const period = (moment) => {
+  return moment.month() * 3 + parseInt(moment.date() / 10);
+};
 
-// console.log(messages);
+const talkers = _.flow(
+  _.mapValues(
+    _.map(_.head),
+  ),
+  _.toPairs,
+  _.map(_.tail),
+  _.flattenDeep,
+  _.uniq
+)(topTalkers(3, period)(messages));
 
 const out = _.flow(
-  _.map(parseMsg),
-  _.groupBy('user'),
-  _.mapValues('length'),
-  _.mapKeys(name => usernames[name]),
-  _.toPairs,
-  _.sortBy(1),
-  _.each(console.log)
+  _.filter(msg => _.includes(msg.user, talkers)),
+  countMsgPerTalker(period)
 )(messages);
+
+// print(out);
+// console.log(JSON.stringify(out));
+
+echarts({
+  width: 800,
+  height: 1000,
+  path: './output/out.png',
+  option: {
+    xAxis: {
+      type: 'value',
+      interval: 1,
+      axisLabel: {
+        formatter: (value) => {
+          return (value % 3) ? '' : 1 + value / 3;
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+    },
+    series: _.map(([name, data]) => {
+      return {
+        name: usernames[name],
+        data,
+        type: 'line'
+      }
+    })(out),
+    legend: {
+      data: _.flow(
+        _.map(_.head),
+        _.map(name => usernames[name]),
+        _.uniq
+      )(out)
+    }
+  }
+}).then(() => process.exit(0)).catch(console.log);
