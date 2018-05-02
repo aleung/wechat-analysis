@@ -12,7 +12,21 @@ npm install
 
 **本项目仅仅为原型，并非通用工具**，因此实际使用时需要修改源码。部分参数需要自行使用 SQLite view 从数据库中找到。
 
-将解密后的文件`decrypted.db`拷贝到本项目根目录，运行 `node src/index.js` 将分析数据生成多个图片在`output`目录中。要分析的群聊ID在｀ROOM｀常量中指定。
+将解密后的文件`decrypted.db`拷贝到本项目根目录，运行 `node src/index.js` 将分析数据生成多个图片在`output`目录中。要分析的群聊ID在`ROOM`常量中指定。
+
+### Example
+
+发消息最多用户，按每旬统计
+
+![](./example/toptalker.png)
+
+某个用户的发消息时间分布
+
+![](./example/heatmap.png)
+
+### Known Issue
+
+由于node-echarts没有释放资源，程序执行完后不会退出，需要 ctrl-c 退出。
 
 ## Detail
 
@@ -31,4 +45,4 @@ npm install
 
 群的信息记录在`chatroom`表。
 
-用户在每个群聊中可以设置群昵称，群昵称存放在BLOB字段`roomdata`中。网上搜索找不到关于这个字段的信息，自己大概分析了一下，大概是 username 和群昵称一对一对的排练，中间夹杂着其他一些数据，名字都是UTF-8编码，前面有一个byte表示长度（字节数）。格式大概是这样：`0A xx 0A nn <username> 12 nn <nickname> 18 <other_data>`，但是没能找到完全符合的规律，0A不能作为username起始的依据。程序中通过搜索`0A xx 0A`模式来定位username，有可能会跳过了某些用户名，因为出来数据似乎没问题就没有深究了。
+用户在每个群聊中可以设置群昵称，群昵称存放在BLOB字段`roomdata`中。网上搜索找不到关于这个字段的信息，自己大概分析了一下，是 username 和群昵称一对一对的排练，中间夹杂着其他一些数据，名字都是UTF-8编码，前面有一个byte表示长度（字节数）。格式大概是这样：`0A xx 0A nn <username> 12 nn <nickname> 18 <other_data>`，但是没能找到完全符合的规律，`0A`不能作为username起始的依据。程序中通过搜索`0A xx 0A`模式来定位username，有可能会跳过了某些用户名，因为出来数据似乎没问题就没有深究了。
