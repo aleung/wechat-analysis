@@ -92,6 +92,7 @@ function parseChatroomNicknames(data) {
   }
 }
 
+// Get top N talkers per period
 function topTalkers(topN, periodFn) {
   return _.flow(
     _.groupBy(msg => periodFn(msg.date)),
@@ -209,7 +210,7 @@ function print(...obj) {
 
 // ========== main ============
 
-const db = new Database('/Users/leoliang/tmp/2018-04/wechat/decrypted.db', { readonly: true, fileMastExist: true });
+const db = new Database('./decrypted.db', { readonly: true, fileMastExist: true });
 
 const userMap = _.flow(
   _.keyBy('username'),
@@ -220,22 +221,28 @@ const { roomdata } = db.prepare('SELECT roomdata FROM chatroom WHERE chatroomnam
 const nicknameMap = _.fromPairs(parseChatroomNicknames(roomdata));
 const usernames = _.defaults(userMap, nicknameMap);
 
+// type: 1-text, 3-image, 43-?, 47-emoji, 49-shared content, 10000-draw back, 268435505-app msg
 const messages = _.map(parseMsg)(
-  db.prepare('SELECT content, createTime, type FROM message WHERE talker=? AND type IN (1,3,49) AND createTime<1524960000000 LIMIT 10000000').all(ROOM)
+  db.prepare('SELECT content, createTime, type FROM message WHERE talker=? AND type IN (1,3,49) LIMIT 10000000').all(ROOM)
 );
 
+// period of 10 days (3 periods in one month)
 const period = (moment) => {
   return moment.month() * 3 + parseInt(moment.date() / 10);
 };
 
+// period of quarter
 const periodQuarter = (moment) => {
   return moment.quarter();
 };
+
+// TODO: word splitting
 
 // const words = wordList(period)(messages);
 // print(words);
 // process.exit();
 
+// list of all top N talkers per period
 const talkers = _.flow(
   _.mapValues(
     _.map(_.head),
@@ -288,9 +295,7 @@ echarts({
       )(out)
     }
   }
-})
-  // .then(() => process.exit(0))
-  .catch(console.log);
+}).catch(console.log);
 
 
 
