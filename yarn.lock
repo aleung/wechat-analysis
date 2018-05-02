@@ -442,6 +442,10 @@ ms@2.0.0:
   version "2.0.0"
   resolved "http://registry.npm.taobao.org/ms/download/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
 
+nan@~2.3.0:
+  version "2.3.5"
+  resolved "http://registry.npm.taobao.org/nan/download/nan-2.3.5.tgz#822a0dc266290ce4cd3a12282ca3e7e364668a08"
+
 node-echarts@^1.1.2:
   version "1.1.2"
   resolved "http://registry.npm.taobao.org/node-echarts/download/node-echarts-1.1.2.tgz#cfd05313c079a03294d6735e7df2345ead10c108"
@@ -464,6 +468,12 @@ node-pre-gyp@^0.6.29:
     semver "^5.3.0"
     tar "^2.2.1"
     tar-pack "^3.4.0"
+
+nodejieba@^2.2.5:
+  version "2.2.5"
+  resolved "http://registry.npm.taobao.org/nodejieba/download/nodejieba-2.2.5.tgz#821441a683fad25ebd2c8dde1401dd43dbeb027a"
+  dependencies:
+    nan "~2.3.0"
 
 nopt@^4.0.1:
   version "4.0.1"
